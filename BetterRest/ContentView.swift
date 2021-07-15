@@ -37,13 +37,18 @@ struct ContentView: View {
                     DatePicker("Please enter a time", selection: $wakeUp, displayedComponents: .hourAndMinute)
                         .labelsHidden()
                         .datePickerStyle(WheelDatePickerStyle())
+                        .onChange(of: wakeUp) { newValue in
+                            calculateBedtime()
+                        }
                 }
-                
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Desired amount of sleep")
                         .font(.headline)
                     Stepper(value: $sleepAmount, in: 4...12, step: 0.25) {
                         Text("\(sleepAmount, specifier: "%g") hours")
+                    }
+                    .onChange(of: sleepAmount) { newValue in
+                        calculateBedtime()
                     }
                 }
                 VStack(alignment: .leading, spacing: 0) {
@@ -56,19 +61,12 @@ struct ContentView: View {
                             Text("\(coffeeAmount) cups")
                         }
                     }
-                }
-                VStack() {
-                    Button(action: calculateBedtime) {
-                        Text("Calculate")
+                    .onChange(of: coffeeAmount) { newValue in
+                        calculateBedtime()
                     }
                 }
-                
             }
             .navigationTitle("Better Rest")
-//            .navigationBarItems(trailing:
-//                Button(action: calculateBedtime) {
-//                    Text("Calculate")
-//                })
             .alert(isPresented: $showingAlert, content: {
                 Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             })
