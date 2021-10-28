@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreML
 
 struct ContentView: View {
     @State private var sleepAmount = 8.0
@@ -15,9 +16,6 @@ struct ContentView: View {
     @State private var alertTitle = ""
     @State private var alertMessage = ""
     @State private var showingAlert = false
-    
-    //this seems to be deprecated, need to figure out using init(configuration:)
-    let model = SleepCalculator()
     
     //make defaultWakeTime static so that it belongs to ContentView rather than a single instance of the struct.
     //Does not rely on the existence of any other properties
@@ -37,9 +35,9 @@ struct ContentView: View {
                     DatePicker("Please enter a time", selection: $wakeUp, displayedComponents: .hourAndMinute)
                         .labelsHidden()
                         .datePickerStyle(WheelDatePickerStyle())
-                        .onChange(of: wakeUp) { newValue in
-                            calculateBedtime()
-                        }
+//                        .onChange(of: wakeUp) { newValue in
+//                            calculateBedtime()
+//                        }
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Desired amount of sleep")
@@ -47,9 +45,9 @@ struct ContentView: View {
                     Stepper(value: $sleepAmount, in: 4...12, step: 0.25) {
                         Text("\(sleepAmount, specifier: "%g") hours")
                     }
-                    .onChange(of: sleepAmount) { newValue in
-                        calculateBedtime()
-                    }
+//                    .onChange(of: sleepAmount) { newValue in
+//                        calculateBedtime()
+//                    }
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Daily coffee intake")
@@ -61,12 +59,15 @@ struct ContentView: View {
                             Text("\(coffeeAmount) cups")
                         }
                     }
-                    .onChange(of: coffeeAmount) { newValue in
-                        calculateBedtime()
-                    }
+//                    .onChange(of: coffeeAmount) { newValue in
+//                        calculateBedtime()
+//                    }
                 }
             }
             .navigationTitle("Better Rest")
+            .toolbar {
+                Button("Calculate", action: calculateBedtime)
+            }
             .alert(isPresented: $showingAlert, content: {
                 Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             })
@@ -79,6 +80,9 @@ struct ContentView: View {
         let minute = (components.minute ?? 0) * 60
         
         do {
+            let config = MLModelConfiguration()
+            let model = try SleepCalculator(configuration: config)
+            
             let prediction = try model.prediction(wake: Double(hour + minute), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount))
             let sleepTime = wakeUp - prediction.actualSleep
             
